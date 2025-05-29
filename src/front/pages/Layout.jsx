@@ -7,9 +7,9 @@ import { Footer } from "../components/Footer"
 export const Layout = () => {
     return (
         <ScrollToTop>
-            {localStorage.getItem("token") && <Navbar />}
+            <Navbar />
                 <Outlet />
-            {localStorage.getItem("token") && <Footer />}
+            <Footer />
         </ScrollToTop>
     )
 }

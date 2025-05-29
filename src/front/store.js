@@ -1,45 +1,37 @@
-import { act } from "react"
-
 export const initialStore=()=>{
   return{
-    user: JSON.parse(localStorage.getItem('user'))? JSON.parse(localStorage.getItem('user')): null,
-    videojuegos: [],
-    juegosdemesa: [],
-    jdmdatos: []
+    message: null,
+    todos: [
+      {
+        id: 1,
+        title: "Make the bed",
+        background: null,
+      },
+      {
+        id: 2,
+        title: "Do my homework",
+        background: null,
+      }
+    ]
   }
 }
 
 export default function storeReducer(store, action = {}) {
   switch(action.type){
-    case 'signin/signup':
-      localStorage.setItem('user', JSON.stringify(action.payload.user))
-      localStorage.setItem('token', action.payload.token)
+    case 'set_hello':
       return {
         ...store,
-        user: action.payload.user
-      }
-    case 'logout':
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+        message: action.payload
+      };
+      
+    case 'add_task':
+
+      const { id,  color } = action.payload
+
       return {
         ...store,
-        user: null
-      }
-    case 'load_videojuegos':
-      return {
-        ...store,
-        videojuegos: action.payload
-      }
-    case 'load_juegosdemesa':
-      return {
-        ...store,
-        juegosdemesa: action.payload
-      }
-    case 'load_jdmdatos':
-      return {
-        ...store,
-        jdmdatos: action.payload
-      }
+        todos: store.todos.map((todo) => (todo.id === id ? { ...todo, background: color } : todo))
+      };
     default:
       throw Error('Unknown action.');
   }    
