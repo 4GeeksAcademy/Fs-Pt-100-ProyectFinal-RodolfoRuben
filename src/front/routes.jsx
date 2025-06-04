@@ -12,6 +12,11 @@ import { Games } from "./pages/Games";
 import { Signup } from "./pages/SignUp";
 import { Signin } from "./pages/SignIn";
 import { IAsession } from "./pages/IAsession";
+import { GameDetail } from "./pages/GameDetail";
+import { ForgotPassword } from "./pages/ForgotPassword";
+import { ResetPassword } from "./pages/ResetPassword";
+import { BoardGames } from "./pages/BoardG";
+
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
@@ -31,6 +36,10 @@ export const router = createBrowserRouter(
         <Route path="/signup" element={<Signup />} />
         <Route path="/signin" element={<Signin />} />
         <Route path="/ia_sessions" element={<IAsession />} />
+        <Route path="/games/:id" element={<GameDetail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/boardgames" element={<BoardGames />} />
       </Route>
     )
 );

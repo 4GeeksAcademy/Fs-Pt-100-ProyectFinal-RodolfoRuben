@@ -1,14 +1,14 @@
 """empty message
 
-<<<<<<<< HEAD:migrations/versions/4571e5c04db8_.py
-Revision ID: 4571e5c04db8
+<<<<<<<< HEAD:migrations/versions/075da8676d6d_.py
+Revision ID: 075da8676d6d
 Revises: 
-Create Date: 2025-05-28 15:00:43.642457
+Create Date: 2025-05-30 11:14:03.180219
 ========
-Revision ID: ef38555d3163
+Revision ID: 6e4f7da7ac38
 Revises: 
-Create Date: 2025-05-29 11:33:42.054952
->>>>>>>> 1d2299660448833f67ca420b140ab24d64e13baf:migrations/versions/ef38555d3163_.py
+Create Date: 2025-05-30 09:43:58.747545
+>>>>>>>> d71c9a67ff60338114a3168542867d87ae810085:migrations/versions/6e4f7da7ac38_.py
 
 """
 from alembic import op
@@ -16,11 +16,11 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-<<<<<<<< HEAD:migrations/versions/4571e5c04db8_.py
-revision = '4571e5c04db8'
+<<<<<<<< HEAD:migrations/versions/075da8676d6d_.py
+revision = '075da8676d6d'
 ========
-revision = 'ef38555d3163'
->>>>>>>> 1d2299660448833f67ca420b140ab24d64e13baf:migrations/versions/ef38555d3163_.py
+revision = '6e4f7da7ac38'
+>>>>>>>> d71c9a67ff60338114a3168542867d87ae810085:migrations/versions/6e4f7da7ac38_.py
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -115,7 +115,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('chapter_number', sa.Integer(), nullable=True),
     sa.Column('decision', sa.String(length=400), nullable=False),
-    sa.Column('description', sa.String(length=400), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
     sa.Column('outcome', sa.String(length=400), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('sessions_id', sa.Integer(), nullable=False),

@@ -1,17 +1,22 @@
 // Import necessary components from react-router-dom and other parts of the application.
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";  // Custom hook for accessing the global state.
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import userServices from "../services/flux";
-import "../styles/Games.css"
+import "../styles/Games.css";
 import { NavbarVisitor } from "../components/NavbarVisitor";
 import storeServices from "../services/fluxApis";
 import { UserLogueado } from "../components/UserLogueado";
-import { House, MagnifyingGlass, Gear, FolderSimple, ChatCircle, User } from "phosphor-react";
+import { House, MagnifyingGlass, Gear, Globe, GameController, PuzzlePiece, User, CaretLeft, CaretRight } from "phosphor-react";
 import anime from "animejs";
 import botones from './../assets/botones.mp3'
+import Botonsiguiente from './../assets/Botonsiguiente.mp3'
+import { useNavigate } from "react-router-dom";
+import { BoardGames } from "./BoardG";
+
 
 export const Games = () => {
+
   // Access the global state and dispatch function using the useGlobalReducer hook.
   const { store, dispatch } = useGlobalReducer()
   const [page, setPage] = useState(1)
@@ -19,8 +24,10 @@ export const Games = () => {
   const [pagina, setPagina] = useState(1)
   const [letra, setLetra] = useState("a")
   const [cargando, setCargando] = useState(false)
+  const [showSearchCanvas, setShowSearchCanvas] = useState(false);
+  const [clickedCard, setClickedCard] = useState(null);
   const audioBotones = new Audio(botones)
-
+  const navigate = useNavigate();
   const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
 
   const user = JSON.parse(localStorage.getItem('user'));
@@ -32,44 +39,23 @@ export const Games = () => {
     )
   }, [page])
 
+  //   useEffect(() => {
+  //     const sessionID = store.sessionID || localStorage.getItem('activeSessionID');
+  //     if (sessionID) {
+  //       openAiServices.getIAsession(sessionID);
+  //     } else {
+  //       console.warn("No hay sessionID definido");
+  //     }
+  // }, [])
 
-  const juegosPorPagina = 6
 
-  useEffect(() => {
-    const cargar = async () => {
-      setCargando(true)
-      try {
-        const lista = await storeServices.getJuegosMesa(letra)
-        console.log("Juegos recibidos", lista);
-
-
-        const detalles = await Promise.all(
-          lista.slice((pagina - 1) * juegosPorPagina, pagina * juegosPorPagina).map(async (j) => {
-            try {
-              const detalle = await storeServices.JuegosMesaDatos(j.id)
-              console.log("detalle cargado", detalle)
-              return detalle
-            } catch (error) {
-              console.warn(`Error cargando juego con id ${j.id}:`, error)
-              return null
-            }
-          })
-        )
-        setJuegos(detalles.filter(j => j !== null))
-      } catch (error) {
-        console.error("Error cargando juegos:", error)
-        setJuegos([])
-      }
-      setCargando(false)
-    }
-    cargar()
-  }, [pagina, letra])
 
   // AQUI EMPIEZA LOS RECUADROS DE ARRIBA//
 
   const handleMouseEnter = (e) => {
-    audioBotones.play();
+
     anime.remove(e.currentTarget);
+    audioBotones.play();
 
     anime({
       targets: e.currentTarget,
@@ -77,12 +63,15 @@ export const Games = () => {
         { value: -44, easing: "easeOutExpo", duration: 600 },
         { value: 0, easing: "easeOutBounce", duration: 800, delay: 100 }
       ],
+
       rotate: {
         value: "-1turn", // ✅ Gira completamente
         duration: 1000,
         easing: "easeInOutSine"
+
       },
       delay: 0
+
     });
 
   };
@@ -102,19 +91,49 @@ export const Games = () => {
   };
 
   const items = [
-    { icon: <House size={32} weight="fill" />, label: "Home" },
+    { icon: <House size={32} weight="fill" />, label: "Home", route: "/" },
     { icon: <MagnifyingGlass size={32} weight="fill" />, label: "Search" },
-    { icon: <Gear size={32} weight="fill" />, label: "Settings" },
-    { icon: <FolderSimple size={32} weight="fill" />, label: "Files" },
-    { icon: <ChatCircle size={32} weight="fill" />, label: "Messages" },
+    { icon: <Globe size={32} weight="fill" />, label: "OnlineGames", route: "/onlinegames" },
+    { icon: <GameController size={32} weight="fill" />, label: "Videogames" },
+    { icon: <PuzzlePiece size={32} weight="fill" />, label: "Boardgames", route: "/boardgames" },
     { icon: <User size={32} weight="fill" />, label: "Profile" }
   ];
 
+  const handleClick = (route, label) => {
+    const storedUser = JSON.parse(localStorage.getItem('user')) || null;
+
+    if (label === "Search") {
+      const canvasEl = document.getElementById("staticBackdrop");
+      const bsCanvas = new window.bootstrap.Offcanvas(canvasEl);
+      bsCanvas.show();
+      return;
+    }
+
+    if (label === "Profile" && !storedUser) {
+      navigate('/signin');
+      return;
+    }
+
+    navigate(route);
+  };
 
   // AQUI TERMINA LOS RECUADROS DE ARRIBA//
 
+  const handleClickCard = (id) => {
+    setClickedCard(id);
+    setTimeout(() => setClickedCard(null), 500); // Glitch dura 500ms
+  };
 
 
+  const hoverSoundRef = useRef(new Audio(Botonsiguiente));
+
+  const playHoverSound = () => {
+    const sound = hoverSoundRef.current;
+    sound.currentTime = 0; // 🔥 Esta línea es clave
+    sound.play().catch(e => {
+      console.log("Playback prevented:", e);
+    });
+  };
 
 
   return (
@@ -122,12 +141,13 @@ export const Games = () => {
       <div className="fondoGames">
         <div className="container">
           <div className="ps5-grid">
-            {items.map(({ icon, label }, i) => (
+            {items.map(({ icon, label, route }, i) => (
               <div
                 key={i}
                 className="char ps5-card"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
+                onClick={() => handleClick(route, label)}
               >
                 <div className="icon">{icon}</div>
                 <span className="label">{label}</span>
@@ -136,13 +156,23 @@ export const Games = () => {
             ))}
           </div>
         </div>
-        <div className="discover-sidebar__nav__elements">
-          <div className="page__content-wrap-centerer">
-            <div className="page__content-wrap with-sidebar">
-              <div>
-                <aside className="discover__sidebar discover__sidebar_desktop">
-                  <nav className="discover-sidebar__nav discover-sidebar__nav_desktop">
-                    <div className="discover-sidebar__menu">
+
+
+
+        <div className="offcanvas offcanvas-start" data-bs-backdrop="static" tabIndex="-1" id="staticBackdrop" aria-labelledby="staticBackdropLabel">
+          <div className="offcanvas-header">
+            <h5 className="offcanvas-title" id="staticBackdropLabel">{JSON.parse(localStorage.getItem("user"))?.username}</h5>
+            <button type="button" className="btn-close bg-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div className="offcanvas-body">
+            <div>
+              <div className="discover-sidebar__nav__elements">
+                <div className="page__content-wrap-centerer">
+                  <div className="page__content-wrap with-sidebar">
+                    <div>
+                      {/* <aside className="discover__sidebar discover__sidebar_desktop">
+                        <nav className="discover-sidebar__nav discover-sidebar__nav_desktop">
+                          <div className="discover-sidebar__menu"> */}
                       <a className="discover-sidebar__title" href="/">Home</a>
                       <ul className="discover-sidebar__list"></ul>
                     </div>
@@ -150,7 +180,7 @@ export const Games = () => {
                       <div className="discover-sidebar__menu">
                         <span className="discover-sidebar__title">
                           <a className="discover-sidebar__user" href="/profile">
-                            <span className="discover-sidebar__username">{localStorage.getItem("username")}</span>
+                            <span className="discover-sidebar__username"></span>
                             {/* <div className="avatar avatar_default-1" >
                               <span className="avatar__initials" >RC</span>
                             </div> */}
@@ -173,11 +203,11 @@ export const Games = () => {
                                 <svg className="SVGInline-svg discover-sidebar__icon-svg discover-sidebar__icon_library-svg" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
                                   <defs>
                                     <linearGradient id="a" x1="50%" x2="50%" y1="0%" y2="100%">
-                                      <stop offset="0%" stop-color="#B4EC51" />
-                                      <stop offset="100%" stop-color="#429321" />
+                                      <stop offset="0%" stopColor="#B4EC51" />
+                                      <stop offset="100%" stopColor="#429321" />
                                     </linearGradient>
                                   </defs>
-                                  <path fill="url(#a)" fill-rule="evenodd" d="M6.465 11.4c-.956 0-1.733.769-1.733 1.714v10.457c0 .946.777 1.715 1.733 1.715h17.07c.956 0 1.733-.77 1.733-1.715V13.114c0-.945-.777-1.714-1.733-1.714H6.465zm0 15.6C4.554 27 3 25.462 3 23.571V13.114c0-1.89 1.554-3.428 3.465-3.428h17.07c1.911 0 3.465 1.537 3.465 3.428v10.457C27 25.462 25.446 27 23.535 27H6.465zM9.496 4.714a.86.86 0 01-.866-.857A.86.86 0 019.496 3h11.008c.478 0 .866.383.866.857a.861.861 0 01-.866.857H9.496zM7.244 8.058a.861.861 0 01-.866-.858c0-.474.388-.857.866-.857h15.512c.478 0 .866.383.866.857a.861.861 0 01-.866.858H7.244z" />
+                                  <path fill="url(#a)" fillRule="evenodd" d="M6.465 11.4c-.956 0-1.733.769-1.733 1.714v10.457c0 .946.777 1.715 1.733 1.715h17.07c.956 0 1.733-.77 1.733-1.715V13.114c0-.945-.777-1.714-1.733-1.714H6.465zm0 15.6C4.554 27 3 25.462 3 23.571V13.114c0-1.89 1.554-3.428 3.465-3.428h17.07c1.911 0 3.465 1.537 3.465 3.428v10.457C27 25.462 25.446 27 23.535 27H6.465zM9.496 4.714a.86.86 0 01-.866-.857A.86.86 0 019.496 3h11.008c.478 0 .866.383.866.857a.861.861 0 01-.866.857H9.496zM7.244 8.058a.861.861 0 01-.866-.858c0-.474.388-.857.866-.857h15.512c.478 0 .866.383.866.857a.861.861 0 01-.866.858H7.244z" />
                                 </svg>
                               </span>
                               <span className="discover-sidebar__label">Favorites</span>
@@ -237,17 +267,17 @@ export const Games = () => {
                           <a className="discover-sidebar__link" href="/games/nintendo-switch">
                             <span className="SVGInline discover-sidebar__icon">
                               <svg className="SVGInline-svg discover-sidebar__icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 16">
-                                <path fill="#FFF" fill-rule="evenoddd" d="M 8 0 h 5 a 8 8 0 1 1 0 16 H 8 A 8 8 0 1 1 8 0 Z m -0.135 1.935 a 6.065 6.065 0 0 0 0 12.13 h 5.12 a 6.065 6.065 0 0 0 0 -12.13 h -5.12 Z m -1.33 2.304 h 2.401 l 3.199 5.175 V 4.24 h 2.346 v 7.495 H 12.18 L 8.864 6.537 v 5.201 H 6.53 l 0.005 -7.499 Z" />
+                                <path fill="#FFF" fillRule="evenoddd" d="M 8 0 h 5 a 8 8 0 1 1 0 16 H 8 A 8 8 0 1 1 8 0 Z m -0.135 1.935 a 6.065 6.065 0 0 0 0 12.13 h 5.12 a 6.065 6.065 0 0 0 0 -12.13 h -5.12 Z m -1.33 2.304 h 2.401 l 3.199 5.175 V 4.24 h 2.346 v 7.495 H 12.18 L 8.864 6.537 v 5.201 H 6.53 l 0.005 -7.499 Z" />
                               </svg>
                             </span>
                             <span className="discover-sidebar__label">Nintendo Switch</span>
                           </a>
                         </li>
                         <li className="discover-sidebar__item">
-                          <div className="discover-sidebar__link discover-sidebar__link_toggle discover-sidebar__link_toggle-collapsed" role="button" tabindex="0">
+                          <div className="discover-sidebar__link discover-sidebar__link_toggle discover-sidebar__link_toggle-collapsed" role="button" tabIndex="0">
                             <span className="SVGInline discover-sidebar__icon">
                               <svg className="SVGInline-svg discover-sidebar__icon-svg" viewBox="0 0 19 35" width="19" height="35" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M18.414 16.476l-15-15A2 2 0 10.586 4.304L14.172 17.89.586 31.476a2 2 0 102.828 2.828l15-15a2 2 0 000-2.828z" fill="#FFF" fill-rule="evenodd" />
+                                <path d="M18.414 16.476l-15-15A2 2 0 10.586 4.304L14.172 17.89.586 31.476a2 2 0 102.828 2.828l15-15a2 2 0 000-2.828z" fill="#FFF" fillRule="evenodd" />
                               </svg>
                             </span>
                             <span className="discover-sidebar__label">Show all</span>
@@ -312,13 +342,61 @@ export const Games = () => {
                           </a>
                         </li>
                       </ul>
+                      {/* </div>
+                        </nav>
+                      </aside> */}
                     </div>
-                  </nav>
-                </aside>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <div className="game-list">
+          {store.videojuegos.map(e => (
+
+            <div key={e.id} className={`game-card ${clickedCard === e.id ? 'glitch-active' : ''}`}
+              style={{ '--background-url': `url(${e.background_image})` }}
+              onClick={() => handleClickCard(e.id)}>
+              <div className="game-info">
+                <h2 className="game-title">{e.name}</h2>
+                <p className="game-description">{e.rating}⭐</p>
+                <button className="game-button">Buy</button>
+                <button className="game-button">❤️</button>
+                <Link to={`/games/${e.id}`} className="game-button">
+                  Info
+                </Link>
+              </div>
+            </div>
+
+          ))}
+
+        </div>
+        
+            <div className="pagination-container">
+
+
+              <button
+                onClick={() => { setPage(prev => Math.max(prev - 1, 1)); playHoverSound(); }}
+                disabled={page === 1}
+                className={`pagination-button ${page === 1 ? 'disabled' : ''}`}
+              >
+                <CaretLeft size={20} weight="bold" />
+                Página anterior
+              </button>
+
+              <span className="pagination-page">Página {page}</span>
+
+              <button
+                onClick={() => { setPage(prev => prev + 1); playHoverSound(); }}
+                className="pagination-button"
+              >
+                Página siguiente
+                <CaretRight size={20} weight="bold" />
+              </button>
+            </div>
+        
       </div>
     </>
   );
