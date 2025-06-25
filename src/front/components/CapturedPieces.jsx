@@ -27,5 +27,6 @@ export const CapturedPieces = ({ pieces, color }) => {
                 })}
             </div>
         </div>
+        
     )
 }
